@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:\\\\Users\\\\ryanr\\\\Source\\\\repos\\\\twitter-bookmark-indexer\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\ryanr\\\\Source\\\\repos\\\\twitter-bookmark-indexer\" log --oneline -5)",
+      "Bash(git -C \"C:\\\\Users\\\\ryanr\\\\Source\\\\repos\\\\twitter-bookmark-indexer\" add CLAUDE.md)",
+      "Bash(git -C \"C:\\\\Users\\\\ryanr\\\\Source\\\\repos\\\\twitter-bookmark-indexer\" commit -m \"$\\(cat <<''EOF''\nadd CLAUDE.md with project guidance\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "WebSearch",
+      "WebFetch(domain:docs.x.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:developer.x.com)",
+      "WebFetch(domain:opentui.com)",
+      "WebFetch(domain:docs.turso.tech)",
+      "WebFetch(domain:www.postman.com)",
+      "WebFetch(domain:improveandrepeat.com)",
+      "WebFetch(domain:docs.tweepy.org)",
+      "WebFetch(domain:pythonfriday.dev)",
+      "WebFetch(domain:orm.drizzle.team)",
+      "WebFetch(domain:turso.tech)",
+      "Bash(bun add:*)",
+      "Bash(bunx tsc:*)",
+      "Bash(timeout 3 bun run start:*)",
+      "Bash(ls:*)",
+      "Bash(bun run start:*)"
+    ]
+  }
+}

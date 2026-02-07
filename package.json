@@ -4,12 +4,21 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/react": "^19.2.13"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "scripts": {
-    "start": "bun run index.ts"
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.73.0",
+    "@libsql/client": "^0.17.0",
+    "ink": "^6.6.0",
+    "ink-select-input": "^6.2.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^19.2.4"
   }
 }
