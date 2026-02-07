@@ -1,4 +1,5 @@
 import { createClient, type Client } from "@libsql/client";
+import { join } from "path";
 
 let db: Client | null = null;
 
@@ -25,9 +26,8 @@ export function getDb(): Client {
 
 export async function initDb(): Promise<void> {
   const client = getDb();
-  const schemaFile = Bun.file(
-    new URL("./schema.sql", import.meta.url).pathname
-  );
+  const schemaPath = join(import.meta.dir, "schema.sql");
+  const schemaFile = Bun.file(schemaPath);
   const schema = await schemaFile.text();
 
   // Split schema into individual statements and execute
