@@ -46,10 +46,15 @@ export function getAuthorizationUrl(): { url: string; state: string } {
     code_challenge_method: "S256",
   });
 
-  return {
-    url: `${TWITTER_AUTH_URL}?${params.toString()}`,
-    state,
-  };
+  const url = `${TWITTER_AUTH_URL}?${params.toString()}`;
+
+  console.log("\n[Debug] OAuth Configuration:");
+  console.log(`  Client ID: ${clientId.slice(0, 8)}...`);
+  console.log(`  Redirect URI: ${REDIRECT_URI}`);
+  console.log(`  Scopes: ${SCOPES.join(", ")}`);
+  console.log("");
+
+  return { url, state };
 }
 
 export async function exchangeCodeForToken(code: string): Promise<TokenData> {

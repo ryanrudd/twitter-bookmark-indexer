@@ -2,6 +2,8 @@ import { getAccessToken } from "./auth";
 
 const TWITTER_API_BASE = "https://api.twitter.com/2";
 
+let cachedUserId: string | null = null;
+
 export interface TwitterUser {
   id: string;
   username: string;
@@ -35,7 +37,8 @@ export interface BookmarksResponse {
 
 async function twitterFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retryCount = 0
 ): Promise<T> {
   const accessToken = await getAccessToken();
 
@@ -48,6 +51,27 @@ async function twitterFetch<T>(
     },
   });
 
+  if (response.status === 429) {
+    // Rate limited - check when we can retry
+    const resetTime = response.headers.get("x-rate-limit-reset");
+    const remaining = response.headers.get("x-rate-limit-remaining");
+
+    if (retryCount < 3 && resetTime) {
+      const resetMs = parseInt(resetTime, 10) * 1000;
+      const waitMs = Math.max(resetMs - Date.now(), 1000) + 1000; // Add 1s buffer
+      const waitMins = Math.ceil(waitMs / 60000);
+
+      console.log(`Rate limited. Waiting ${waitMins} minute(s) until reset...`);
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      return twitterFetch<T>(endpoint, options, retryCount + 1);
+    }
+
+    throw new Error(
+      `Rate limited by Twitter API. Try again in a few minutes. ` +
+      `(Remaining: ${remaining ?? "unknown"})`
+    );
+  }
+
   if (!response.ok) {
     const error = await response.text();
     throw new Error(`Twitter API error (${response.status}): ${error}`);
@@ -58,7 +82,14 @@ async function twitterFetch<T>(
 
 export async function getMe(): Promise<TwitterUser> {
   const response = await twitterFetch<{ data: TwitterUser }>("/users/me");
+  cachedUserId = response.data.id;
   return response.data;
+}
+
+export async function getUserId(): Promise<string> {
+  if (cachedUserId) return cachedUserId;
+  const me = await getMe();
+  return me.id;
 }
 
 export async function getBookmarks(
@@ -76,24 +107,23 @@ export async function getBookmarks(
     params.set("pagination_token", paginationToken);
   }
 
-  // First get the user ID
-  const me = await getMe();
+  const userId = await getUserId();
 
   return twitterFetch<BookmarksResponse>(
-    `/users/${me.id}/bookmarks?${params.toString()}`
+    `/users/${userId}/bookmarks?${params.toString()}`
   );
 }
 
 export async function getAllBookmarks(
   onProgress?: (count: number) => void,
-  maxTotal = 800
+  maxTotal = 100 // Reduced for free tier
 ): Promise<{ tweets: Tweet[]; users: Map<string, TwitterUser> }> {
   const allTweets: Tweet[] = [];
   const usersMap = new Map<string, TwitterUser>();
   let paginationToken: string | undefined;
 
   do {
-    const response = await getBookmarks(paginationToken);
+    const response = await getBookmarks(paginationToken, 50); // Smaller batches
 
     if (response.data) {
       allTweets.push(...response.data);
@@ -108,9 +138,10 @@ export async function getAllBookmarks(
     paginationToken = response.meta?.next_token;
     onProgress?.(allTweets.length);
 
-    // Rate limit: wait a bit between requests
+    // Rate limit: wait longer between requests for free tier
     if (paginationToken) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log(`Fetched ${allTweets.length} bookmarks, waiting before next batch...`);
+      await new Promise((resolve) => setTimeout(resolve, 5000)); // 5 seconds between requests
     }
   } while (paginationToken && allTweets.length < maxTotal);
 
