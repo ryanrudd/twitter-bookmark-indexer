@@ -101,7 +101,16 @@ export async function exchangeCodeForToken(code: string): Promise<TokenData> {
     access_token: string;
     refresh_token: string;
     expires_in: number;
+    token_type?: string;
+    scope?: string;
   };
+
+  console.log("[Debug] Token exchange response:");
+  console.log(`  Token type: ${data.token_type ?? "not specified"}`);
+  console.log(`  Scope: ${data.scope ?? "not specified"}`);
+  console.log(`  Token prefix: ${data.access_token.slice(0, 15)}...`);
+  console.log(`  Has refresh token: ${!!data.refresh_token}`);
+
   tokenData = {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
@@ -185,6 +194,11 @@ export async function getAccessToken(): Promise<string> {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
+  // Check for X Console Bearer token first
+  if (process.env.X_CONSOLE_BEARER_TOKEN) {
+    return true;
+  }
+
   try {
     const tokens = await loadTokens();
     return tokens !== null;

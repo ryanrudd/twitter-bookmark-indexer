@@ -5,6 +5,8 @@ import { Header } from "../components/Header";
 import { BookmarkCard } from "../components/BookmarkCard";
 import { StatusBar } from "../components/StatusBar";
 import { getBookmarks, searchBookmarks, type BookmarkWithAuthor } from "../../db/queries";
+import { hybridSearch, type SearchResult } from "../../analysis/search";
+import { hasEmbeddings } from "../../analysis/index";
 
 interface BookmarksProps {
   onBack: () => void;
@@ -19,6 +21,12 @@ export function Bookmarks({ onBack }: BookmarksProps) {
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [useSemanticSearch, setUseSemanticSearch] = useState(false);
+  const [searchType, setSearchType] = useState<"keyword" | "semantic">("keyword");
+
+  useEffect(() => {
+    hasEmbeddings().then(setUseSemanticSearch);
+  }, []);
 
   const loadBookmarks = useCallback(async () => {
     setLoading(true);
@@ -37,14 +45,19 @@ export function Bookmarks({ onBack }: BookmarksProps) {
     }
     setLoading(true);
     try {
-      const data = await searchBookmarks(searchQuery);
-      setBookmarks(data.slice(0, PAGE_SIZE));
+      if (searchType === "semantic" && useSemanticSearch) {
+        const results = await hybridSearch(searchQuery, PAGE_SIZE);
+        setBookmarks(results.map((r) => r.bookmark));
+      } else {
+        const data = await searchBookmarks(searchQuery);
+        setBookmarks(data.slice(0, PAGE_SIZE));
+      }
       setPage(0);
       setSelectedIndex(0);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, loadBookmarks]);
+  }, [searchQuery, loadBookmarks, searchType, useSemanticSearch]);
 
   useEffect(() => {
     if (!searchMode) {
@@ -69,6 +82,8 @@ export function Bookmarks({ onBack }: BookmarksProps) {
       onBack();
     } else if (input === "/") {
       setSearchMode(true);
+    } else if (input === "s" && useSemanticSearch) {
+      setSearchType(searchType === "keyword" ? "semantic" : "keyword");
     } else if (key.upArrow || input === "k") {
       setSelectedIndex(Math.max(0, selectedIndex - 1));
     } else if (key.downArrow || input === "j") {
@@ -97,7 +112,11 @@ export function Bookmarks({ onBack }: BookmarksProps) {
     <Box flexDirection="column" padding={1}>
       <Header
         title="Bookmarks"
-        subtitle={searchQuery ? `Search: "${searchQuery}"` : `Page ${page + 1}`}
+        subtitle={
+          searchQuery
+            ? `${searchType === "semantic" ? "Semantic" : "Keyword"} search: "${searchQuery}"`
+            : `Page ${page + 1}${useSemanticSearch ? ` · ${searchType} mode` : ""}`
+        }
       />
 
       {searchMode ? (
@@ -129,7 +148,7 @@ export function Bookmarks({ onBack }: BookmarksProps) {
         hint={
           searchMode
             ? "Enter to search · Esc to cancel"
-            : "/ search · j/k navigate · n/p page · b back"
+            : `/ search${useSemanticSearch ? " · s toggle semantic" : ""} · j/k navigate · n/p page · b back`
         }
       />
     </Box>

@@ -25,6 +25,7 @@ export function Sync({ onBack }: SyncProps) {
   const [result, setResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
+  const hasBearerToken = !!process.env.X_CONSOLE_BEARER_TOKEN;
 
   useEffect(() => {
     async function load() {
@@ -62,7 +63,7 @@ export function Sync({ onBack }: SyncProps) {
   }, []);
 
   const handleSync = useCallback(async () => {
-    if (!authenticated) return;
+    if (!authenticated && !hasBearerToken) return;
 
     setSyncState("syncing");
     setError(undefined);
@@ -93,11 +94,11 @@ export function Sync({ onBack }: SyncProps) {
 
     if (key.escape || input === "b") {
       onBack();
-    } else if (input === "c" && !authenticated) {
+    } else if (input === "c" && !authenticated && !hasBearerToken) {
       handleConnect();
-    } else if (input === "s" && authenticated) {
+    } else if (input === "s" && (authenticated || hasBearerToken)) {
       handleSync();
-    } else if (input === "d" && authenticated) {
+    } else if (input === "d" && authenticated && !hasBearerToken) {
       handleDisconnect();
     }
   });
@@ -124,7 +125,11 @@ export function Sync({ onBack }: SyncProps) {
         <Text>
           Status:{" "}
           <Text color={authenticated ? "green" : "yellow"}>
-            {authenticated ? "Connected" : "Not connected"}
+            {hasBearerToken
+              ? "Using X Console Bearer Token"
+              : authenticated
+                ? "Connected via OAuth"
+                : "Not connected"}
           </Text>
         </Text>
         <Text>
@@ -161,9 +166,13 @@ export function Sync({ onBack }: SyncProps) {
 
       <Box marginTop={1} flexDirection="column">
         <Text bold>Actions</Text>
-        {!authenticated ? (
+        {hasBearerToken ? (
           <Text>
-            <Text color="cyan">[c]</Text> Connect Twitter account
+            <Text color="cyan">[s]</Text> Sync bookmarks now
+          </Text>
+        ) : !authenticated ? (
+          <Text>
+            <Text color="cyan">[c]</Text> Connect Twitter account (OAuth)
           </Text>
         ) : (
           <>

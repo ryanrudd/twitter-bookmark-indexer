@@ -21,7 +21,8 @@
       "Bash(bunx tsc:*)",
       "Bash(timeout 3 bun run start:*)",
       "Bash(ls:*)",
-      "Bash(bun run start:*)"
+      "Bash(bun run start:*)",
+      "Bash(bun remove:*)"
     ]
   }
 }

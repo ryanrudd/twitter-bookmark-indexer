@@ -4,12 +4,10 @@ import { initDb } from "../db/client";
 import { Home } from "./screens/Home";
 import { Bookmarks } from "./screens/Bookmarks";
 import { Topics } from "./screens/Topics";
-import { Tasks } from "./screens/Tasks";
-import { Ideas } from "./screens/Ideas";
 import { Sync } from "./screens/Sync";
 import { Analyze } from "./screens/Analyze";
 
-type Screen = "home" | "bookmarks" | "topics" | "tasks" | "ideas" | "sync" | "analyze";
+type Screen = "home" | "bookmarks" | "topics" | "sync" | "analyze";
 
 export function App() {
   const { exit } = useApp();
@@ -29,7 +27,7 @@ export function App() {
     init();
   }, []);
 
-  useInput((input, key) => {
+  useInput((input) => {
     if (input === "q" && currentScreen === "home") {
       exit();
     }
@@ -67,10 +65,6 @@ export function App() {
       return <Bookmarks onBack={handleBack} />;
     case "topics":
       return <Topics onBack={handleBack} />;
-    case "tasks":
-      return <Tasks onBack={handleBack} />;
-    case "ideas":
-      return <Ideas onBack={handleBack} />;
     case "sync":
       return <Sync onBack={handleBack} />;
     case "analyze":

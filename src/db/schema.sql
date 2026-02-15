@@ -17,7 +17,16 @@ CREATE TABLE IF NOT EXISTS bookmarks (
   bookmarked_at TEXT NOT NULL,
   like_count INTEGER DEFAULT 0,
   retweet_count INTEGER DEFAULT 0,
-  synced_at TEXT NOT NULL
+  synced_at TEXT NOT NULL,
+  embedding TEXT,  -- JSON array of floats
+  cluster_id INTEGER
+);
+
+-- Full-text search virtual table
+CREATE VIRTUAL TABLE IF NOT EXISTS bookmarks_fts USING fts5(
+  content,
+  content_rowid='id',
+  tokenize='porter'
 );
 
 -- AI-generated topics/clusters

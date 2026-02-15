@@ -37,7 +37,38 @@ export async function initDb(): Promise<void> {
     .filter((s) => s.length > 0);
 
   for (const statement of statements) {
-    await client.execute(statement);
+    try {
+      await client.execute(statement);
+    } catch (e) {
+      // Ignore errors for CREATE TABLE IF NOT EXISTS and similar
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!msg.includes("already exists")) {
+        console.error("Schema error:", msg);
+      }
+    }
+  }
+
+  // Run migrations for existing databases
+  await runMigrations(client);
+}
+
+async function runMigrations(client: Client): Promise<void> {
+  // Add embedding column if it doesn't exist
+  try {
+    await client.execute(
+      "ALTER TABLE bookmarks ADD COLUMN embedding TEXT"
+    );
+  } catch {
+    // Column already exists
+  }
+
+  // Add cluster_id column if it doesn't exist
+  try {
+    await client.execute(
+      "ALTER TABLE bookmarks ADD COLUMN cluster_id INTEGER"
+    );
+  } catch {
+    // Column already exists
   }
 }
 

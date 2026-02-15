@@ -1,8 +1,15 @@
 import { getAccessToken } from "./auth";
 
-const TWITTER_API_BASE = "https://api.twitter.com/2";
+// Use new X API if Bearer token is set, otherwise use legacy Twitter API
+const TWITTER_API_BASE = process.env.X_CONSOLE_BEARER_TOKEN
+  ? "https://api.x.com/2"
+  : "https://api.twitter.com/2";
 
 let cachedUserId: string | null = null;
+
+function getBearerToken(): string | null {
+  return process.env.X_CONSOLE_BEARER_TOKEN ?? null;
+}
 
 export interface TwitterUser {
   id: string;
@@ -40,7 +47,14 @@ async function twitterFetch<T>(
   options: RequestInit = {},
   retryCount = 0
 ): Promise<T> {
-  const accessToken = await getAccessToken();
+  // Prefer X Console Bearer token, fall back to OAuth
+  const bearerToken = getBearerToken();
+  const accessToken = bearerToken ?? (await getAccessToken());
+
+  console.log(`[Debug] API Base: ${TWITTER_API_BASE}`);
+  console.log(`[Debug] Using Bearer Token: ${!!bearerToken}`);
+  console.log(`[Debug] Token prefix: ${accessToken.slice(0, 10)}...`);
+  console.log(`[Debug] Endpoint: ${endpoint}`);
 
   const response = await fetch(`${TWITTER_API_BASE}${endpoint}`, {
     ...options,
@@ -88,6 +102,14 @@ export async function getMe(): Promise<TwitterUser> {
 
 export async function getUserId(): Promise<string> {
   if (cachedUserId) return cachedUserId;
+
+  // Check for manually configured user ID (needed for Bearer token auth)
+  const envUserId = process.env.X_USER_ID;
+  if (envUserId) {
+    cachedUserId = envUserId;
+    return envUserId;
+  }
+
   const me = await getMe();
   return me.id;
 }

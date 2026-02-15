@@ -29,11 +29,12 @@ async function main() {
     console.log("Environment variables needed:");
     console.log("  TWITTER_CLIENT_ID       Your Twitter OAuth 2.0 client ID");
     console.log("  TWITTER_CLIENT_SECRET   Your Twitter OAuth 2.0 client secret");
-    console.log("  ANTHROPIC_API_KEY       Your Anthropic API key for Claude");
     console.log("");
     console.log("Optional:");
     console.log("  TURSO_DATABASE_URL      Remote Turso database URL");
     console.log("  TURSO_AUTH_TOKEN        Turso auth token");
+    console.log("");
+    console.log("Analysis runs locally using ML models - no API keys needed!");
     return;
   }
 
